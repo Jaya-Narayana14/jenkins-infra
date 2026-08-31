@@ -29,7 +29,6 @@ pipeline {
 	    booleanParam(defaultValue: false, name: 'InstallCSO', description: 'Install Container Security Operator')
         string(defaultValue: '', description: 'Enter index image for installing CSO', name: 'IndexImageCSO')
 		string(defaultValue: 'stable-3.18', description: 'Enter the CSO Operator channel', name: 'CsoChannel')
-        text(defaultValue: '', description: 'Paste pull secret JSON', name: 'CsoPullSecretInput')
         text(defaultValue: '', description: 'Paste icsp yaml', name: 'CsoIcspInput')
     } 
     environment {
@@ -83,7 +82,6 @@ pipeline {
 	    //ContainerSecurityOperator 
 		CSO_CATALOGSOURCE_IMAGE = "${params.IndexImageCSO}"
 		CSO_CHANNEL = "${params.CsoChannel}"
-		CSO_PULL_SECRET_INPUT = "${params.CsoPullSecretInput}"
 		CSO_ICSP_INPUT = "${params.CsoIcspInput}"
 
         //Parameters
@@ -365,10 +363,15 @@ pipeline {
                             ansiColor('xterm') {
                             echo ""
                             }
+							// Computes the specific credential key expected in Jenkins
+							def pullSecretId = "pull-secret-${params.CSO_CHANNEL}"
                             try {
-                                sh '''
-                                    cd ${WORKSPACE} && chmod +x ./scripts/operator/cso_operator.sh && ./scripts/operator/cso_operator.sh
-                                '''
+								// Dynamically load only the versioned pull secret from the safe store
+								withCredentials([ string(credentialsId: pullSecretId, variable: 'CSO_PULL_SECRET_INPUT')]) {
+									sh '''
+										cd ${WORKSPACE} && chmod +x ./scripts/operator/cso_operator.sh && ./scripts/operator/cso_operator.sh
+									'''
+								}
                             }
                             catch(err) {
                                 echo 'CSO operator installation failed!'
