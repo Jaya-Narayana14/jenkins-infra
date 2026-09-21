@@ -367,7 +367,7 @@ pipeline {
                             echo ""
                             }
 							// Computes the specific credential key expected in Jenkins
-							def pullSecretId = "pull-secret-${params.CSO_CHANNEL}"
+							def pullSecretId = "pull-secret-${env.CSO_CHANNEL}"
                             try {
 								// Dynamically load only the versioned pull secret from the safe store
 								withCredentials([ string(credentialsId: pullSecretId, variable: 'CSO_PULL_SECRET_INPUT')]) {
